@@ -17,6 +17,14 @@ import org.springframework.security.web.context.DelegatingSecurityContextReposit
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+
+import java.util.List;
 
 @Configuration
 public class WebSecurityConfig {
@@ -57,6 +65,8 @@ public class WebSecurityConfig {
 //                .requestMatchers(HttpMethod.POST, "/couponapi/coupons").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/couponapi/coupons").authenticated()
 
+                        .requestMatchers("/", "/login", "/showReg", "/registerUser").permitAll()
+
                 //DEFAULT
                         .anyRequest().authenticated()
         );
@@ -68,7 +78,36 @@ public class WebSecurityConfig {
                 .invalidateHttpSession(true) //default
         );
 
-        http.csrf(AbstractHttpConfigurer::disable);
+        //NEW
+//        http.csrf(AbstractHttpConfigurer::disable);
+        http.csrf(
+                csrf -> {
+                    csrf
+                            .ignoringRequestMatchers("/couponapi/coupons/**");
+
+                    RequestMatcher matcher = new RegexRequestMatcher("/couponapi/coupons/{code:^[A-Z]*$", "POST");
+                    matcher = new MvcRequestMatcher(new HandlerMappingIntrospector(), "/getCoupon");
+                    csrf.ignoringRequestMatchers(matcher);
+                }
+        );
+
+        //kad se doda csrf /logout link nece raditi vec moram da napravim dugme za logout
+
+         //CORS - kada se pristupa sa drugog domena / porta
+        // access control allow origin - sa kojih izvora
+        // access control allow methods - koje metode
+        // access control allow headers - koji header-i
+
+        http.cors(cors -> {
+            CorsConfigurationSource configurationSource = request -> {
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
+
+                corsConfiguration.setAllowedOrigins(List.of("localhost:3000"));
+                corsConfiguration.setAllowedMethods(List.of("GET"));
+                return corsConfiguration;
+            };
+            cors.configurationSource(configurationSource);
+        });
 
         //NEW
         http.securityContext(context -> context.requireExplicitSave(true));
