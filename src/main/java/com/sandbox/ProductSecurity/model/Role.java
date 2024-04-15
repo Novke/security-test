@@ -1,10 +1,11 @@
 package com.sandbox.ProductSecurity.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
-
-import java.util.Set;
 
 @Data
 @Entity
@@ -14,8 +15,6 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
-    private Set<User> users;
 
 
     @Override
